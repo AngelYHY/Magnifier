@@ -2,47 +2,67 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rl"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="freestar.vip.magnifier.MainActivity">
 
-    <FrameLayout
-        android:id="@+id/fl"
-        android:layout_centerInParent="true"
+    <!--<FrameLayout-->
+    <!--android:id="@+id/fl"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_centerInParent="true">-->
+
+    <ImageView
+        android:id="@+id/iv"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:src="@mipmap/ic_launcher"/>
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/iv" />
+    <!--<TextView-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="50dp"-->
+    <!--android:layout_marginTop="50dp"-->
+    <!--android:text="I love you"-->
+    <!--android:textSize="25sp"/>-->
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:textSize="25sp"
-            android:text="I love you"
-            android:layout_marginTop="50dp"
-            android:layout_marginLeft="50dp"
-            android:layout_height="wrap_content" />
+    <!--<TextView-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginLeft="100dp"-->
+    <!--android:layout_marginTop="100dp"-->
+    <!--android:text="小仙女"-->
+    <!--android:textColor="@android:color/holo_red_light"-->
+    <!--android:textSize="25sp"/>-->
 
-        <TextView
-            android:textColor="@android:color/holo_red_light"
-            android:layout_width="wrap_content"
-            android:textSize="25sp"
-            android:text="小仙女"
-            android:layout_marginTop="100dp"
-            android:layout_marginLeft="100dp"
-            android:layout_height="wrap_content" />
-    </FrameLayout>
+    <ImageView
+        android:id="@+id/clip"
+        android:layout_width="100dp"
+        android:layout_height="100dp"/>
+    <!--</FrameLayout>-->
 
     <Button
         android:id="@+id/save"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="保存"
-        android:padding="10dp"
-        android:textSize="20sp"
-        android:layout_marginBottom="10dp"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"/>
+        android:layout_marginBottom="10dp"
+        android:padding="10dp"
+        android:text="保存"
+        android:textSize="20sp"/>
+
+    <Button
+        android:id="@+id/open"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@id/save"
+        android:layout_centerHorizontal="true"
+        android:layout_toRightOf="@id/save"
+        android:padding="10dp"
+        android:text="打开"
+        android:textSize="20sp"/>
+
 </RelativeLayout>
