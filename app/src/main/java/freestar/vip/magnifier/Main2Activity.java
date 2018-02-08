@@ -46,7 +46,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import vip.freestar.mylogger.Logger;
 
-public class Main2Activity extends AppCompatActivity implements View.OnTouchListener {
+public class Main2Activity extends AppCompatActivity implements View.OnTouchListener, SeekBar.OnSeekBarChangeListener {
 
     @Bind(R.id.iv)
     ImageView mIv;
@@ -71,11 +71,13 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
 
     private float lastX;
     private float lastY;
-    private PointF mFocusMidPoint = new PointF();  //中间View的中间点
+
+    private PointF mCenterPoint = new PointF();
 
     private RectF mFocusRect = new RectF();
     ArrayList<ImageItem> images = null;
-
+    private boolean visible = true;
+    private int radius;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,23 +97,12 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
         imagePicker.setMultiMode(false);
         imagePicker.setCrop(false);
 
-//        Glide.with(this)
-////                .load("http://img02.tooopen.com/images/20160509/tooopen_sy_161967094653.jpg")
-////                .load("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1517974003106&di=16528ba917b5872184445706ad48da6e&imgtype=0&src=http%3A%2F%2Fimgsrc.baidu.com%2Fimage%2Fc0%253Dshijue1%252C0%252C0%252C294%252C40%2Fsign%3Dbba1bbca5d2c11dfcadcb7600b4e08a5%2Fa8ec8a13632762d02e7bd896aaec08fa513dc656.jpg")
-////                .load("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1517974095293&di=5d719eb88ab4eeeab5b128c7b1f62e88&imgtype=0&src=http%3A%2F%2Fpic30.photophoto.cn%2F20140106%2F0006018868664533_b.jpg")
-//                .load(R.drawable.love_tree)
-//                .into(mIv);
+        mFl.setOnTouchListener(this);
 
-//        mClip.setOnTouchListener(this);
-//        mFl.setOnTouchListener(this);
+        mSmall.setOnSeekBarChangeListener(this);
+        mBig.setOnSeekBarChangeListener(this);
 
-//        mFl.setOnTouchListener(new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                return false;
-//            }
-//        });
-
+        radius = PreferencesUtils.getInt(this, PreferencesUtils.BIG_CIRCLE, 150);
     }
 
     @Override
@@ -129,60 +120,13 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
             case R.id.camera:
                 Intent intent = new Intent(this, ImageGridActivity.class);
                 intent.putExtra(ImageGridActivity.EXTRAS_IMAGES, images);
-                //ImagePicker.getInstance().setSelectedImages(images);
                 startActivityForResult(intent, 100);
+                break;
+            case R.id.custom:
+                viewVisible();
                 break;
         }
         return true;
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        float rawX = event.getRawX();
-        float rawY = event.getRawY();
-        Logger.e("", event.getX(), event.getY());
-        int[] position = new int[2];
-        mFl.getLocationOnScreen(position);
-        // 在 FL 范围内
-        if (rawX > position[0] && rawX < position[0] + mFl.getWidth() && rawY > position[1] && rawY < position[1] + mFl.getHeight()) {
-            mClip.getLocationOnScreen(position);
-            // 在 大圆范围内
-            if (rawX > position[0] && rawX < position[0] + mClip.getWidth() && rawY > position[1] && rawY < position[1] + mClip.getHeight()) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        // 上一次离开时的坐标
-                        lastX = rawX;
-                        lastY = rawY;
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        // 两次的偏移量
-                        moveView(rawX - lastX, rawY - lastY);
-                        // 不断修改上次移动完成后坐标
-                        lastX = rawX;
-                        lastY = rawY;
-                        break;
-                    default:
-                        break;
-                }
-            } else {  // 非大圆范围
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        viewVisible(false);
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        mCircle.setCenter(new PointF(event.getX(), mFl.getTop()));
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        mCircle.setCenter(new PointF(mFl.getLeft(), mFl.getTop()));
-                        create();
-                        break;
-                    default:
-                        break;
-                }
-            }
-            return true;
-        }
-        return super.onTouchEvent(event);
     }
 
     private void viewSaveToImage(View view) {
@@ -200,15 +144,20 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
             boolean isHasSDCard = Environment.getExternalStorageState().equals(
                     Environment.MEDIA_MOUNTED);
             if (isHasSDCard) {
-                // SD卡根目录
+//                // SD卡根目录
                 String path = Environment.getExternalStorageDirectory() + "/小仙女";
                 File file = new File(path);
                 if (!file.exists()) {
                     file.mkdir();
                 }
+                
+                file=new File(path, Calendar.getInstance().getTimeInMillis() + ".png");
 
-                file = new File(file, Calendar.getInstance().getTimeInMillis() + ".png");
+//                File sdRoot = Environment.getExternalStorageDirectory();
+//                File file = new File(sdRoot, Calendar.getInstance().getTimeInMillis() + ".png");
+
                 fos = new FileOutputStream(file);
+
                 imagePath = file.getAbsolutePath();
             } else
                 throw new Exception("创建文件失败!");
@@ -225,6 +174,9 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
         Logger.e("imagePath=" + imagePath);
 
         view.destroyDrawingCache();
+        Intent intent = getIntent();
+        finish();
+        startActivity(intent);
     }
 
     private Bitmap loadBitmapFromView(View v) {
@@ -245,60 +197,65 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        float x = event.getX();
+        float y = event.getY();
 
-        mFocusMidPoint.x = event.getX();
-        mFocusMidPoint.y = event.getY();
+        Logger.e("", mFl.getTop(), mFl.getLeft(), mFl.getRight(), mFl.getBottom(), event.getY(), event.getX(), event.getRawX(), event.getRawY());
 
-        Logger.e("", mFl.getTop(), mFl.getLeft(), mFl.getRight(), mFl.getBottom(), "V_ID=", v.getId(), event.getY(), event.getX(), event.getRawX(), event.getRawY());
-
-        if (mFocusMidPoint.x > mFl.getLeft() && mFocusMidPoint.x < mFl.getRight() && mFocusMidPoint.y > mFl.getTop() && mFocusMidPoint.y < mFl.getBottom()) {
-            if (v.getId() == R.id.fl) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        viewVisible(false);
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        mCircle.setCenter(new PointF(event.getX() + mFl.getLeft(), event.getY() + mFl.getTop()));
-                        break;
-                    case MotionEvent.ACTION_UP:
-                        mCircle.setCenter(new PointF(event.getX() + mFl.getLeft(), event.getY() + mFl.getTop()));
-                        create();
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                // 获取当前触摸的绝对坐标
-                int rawX = (int) event.getRawX();
-                int rawY = (int) event.getRawY();
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        // 上一次离开时的坐标
-                        lastX = rawX;
-                        lastY = rawY;
-                        break;
-                    case MotionEvent.ACTION_MOVE:
+        //触摸大圆
+        if (x > mClip.getLeft() && x < mClip.getRight() && y > mClip.getTop() && y < mClip.getBottom()) {
+            Logger.e("触摸大圆");
+            // 获取当前触摸的绝对坐标
+            int rawX = (int) event.getRawX();
+            int rawY = (int) event.getRawY();
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    // 上一次离开时的坐标
+                    lastX = rawX;
+                    lastY = rawY;
+                    break;
+                case MotionEvent.ACTION_MOVE:
+//                    if (x > radius && x < mFl.getRight() - radius && y > radius && y < mFl.getHeight() - radius) {
                         // 两次的偏移量
                         moveView(rawX - lastX, rawY - lastY);
                         // 不断修改上次移动完成后坐标
                         lastX = rawX;
                         lastY = rawY;
-                        break;
-                    default:
-                        break;
-                }
+                        Logger.e("移动");
+//                    }
+                    break;
+                default:
+                    break;
             }
-            return true;
+        } else {  // 非大圆部分
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+//                    viewVisible(false);
+                    break;
+                case MotionEvent.ACTION_MOVE:
+//                    if (x > mCircle.getRadius() && x < mFl.getRight() - mCircle.getRadius() && y > mFl.getTop() + mCircle.getRadius() && mFl.getBottom() - mCircle.getRadius() < y) {
+                        mCircle.setCenter(new PointF(event.getX() + mFl.getLeft(), event.getY() + mFl.getTop()));
+//                    }
+                    break;
+                case MotionEvent.ACTION_UP:
+                    mCenterPoint.x = x;
+                    mCenterPoint.y = y;
+                    mCircle.setCenter(new PointF(event.getX() + mFl.getLeft(), event.getY() + mFl.getTop()));
+                    create();
+                    break;
+                default:
+                    break;
+            }
         }
-        return false;
+        return true;
     }
 
     private void create() {
 
-        mFocusRect.left = mFocusMidPoint.x - 50;
-        mFocusRect.right = mFocusMidPoint.x + 50;
-        mFocusRect.top = mFocusMidPoint.y - 50;
-        mFocusRect.bottom = mFocusMidPoint.y + 50;
+        mFocusRect.left = mCenterPoint.x - mCircle.getRadius();
+        mFocusRect.right = mCenterPoint.x + mCircle.getRadius();
+        mFocusRect.top = mCenterPoint.y - mCircle.getRadius();
+        mFocusRect.bottom = mCenterPoint.y + mCircle.getRadius();
 
         Bitmap bitmap = makeCropBitmap(((GlideBitmapDrawable) mIv.getDrawable()).getBitmap(), mFocusRect, getImageMatrixRect(), 100, 100, false);
 
@@ -312,7 +269,7 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
 //                .load("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1517974003106&di=16528ba917b5872184445706ad48da6e&imgtype=0&src=http%3A%2F%2Fimgsrc.baidu.com%2Fimage%2Fc0%253Dshijue1%252C0%252C0%252C294%252C40%2Fsign%3Dbba1bbca5d2c11dfcadcb7600b4e08a5%2Fa8ec8a13632762d02e7bd896aaec08fa513dc656.jpg")
 //                .load("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1517974095293&di=5d719eb88ab4eeeab5b128c7b1f62e88&imgtype=0&src=http%3A%2F%2Fpic30.photophoto.cn%2F20140106%2F0006018868664533_b.jpg")
                 .load(bytes)
-                .override(300, 300)
+                .override(radius * 2, radius * 2)
                 .listener(new RequestListener<byte[], GlideDrawable>() {
                     @Override
                     public boolean onException(Exception e, byte[] model, Target<GlideDrawable> target, boolean isFirstResource) {
@@ -412,8 +369,6 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
         if (resultCode == ImagePicker.RESULT_CODE_ITEMS) {
             if (data != null && requestCode == 100) {
                 images = (ArrayList<ImageItem>) data.getSerializableExtra(ImagePicker.EXTRA_RESULT_ITEMS);
-//                MyAdapter adapter = new MyAdapter(images);
-//                gridView.setAdapter(adapter);
                 Glide.with(this)
                         .load(Uri.fromFile(new File(images.get(0).path)))
                         .into(mIv);
@@ -426,15 +381,33 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
         }
     }
 
-//    @OnClick(R.id.rl)
-//    public void onViewClicked() {
-//        Logger.e("rl click");
-//        viewVisible(true);
-//    }
-
-    private void viewVisible(boolean visible) {
+    private void viewVisible() {
         mText.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
         mSeek.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+        visible = !visible;
     }
 
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+        if (seekBar.getId() == R.id.small) { // 小圆半径
+            mCircle.setRadius(seekBar.getProgress());
+        } else { //大圆半径
+            radius = 150 + (seekBar.getProgress() - 5) * 10;
+        }
+        create();
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        if (seekBar.getId() == R.id.small) { // 小圆半径
+            PreferencesUtils.putInt(this, PreferencesUtils.SMALL_CIRCLE, mCircle.getRadius());
+        } else { //大圆半径
+            PreferencesUtils.putInt(this, PreferencesUtils.BIG_CIRCLE, radius);
+        }
+    }
 }

@@ -9,6 +9,8 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
+import vip.freestar.mylogger.Logger;
+
 /**
  * 描述：
  * 作者：一颗浪星
@@ -20,7 +22,7 @@ public class MyCircle extends View {
 
     private Paint mPaint;
 
-    private int radius = 50;
+    private int radius;
     private PointF center = new PointF();
 
     public MyCircle(Context context) {
@@ -37,6 +39,7 @@ public class MyCircle extends View {
     }
 
     private void initOther() {
+        radius = PreferencesUtils.getInt(getContext(), PreferencesUtils.SMALL_CIRCLE, 50);
 
         mPaint = new Paint();
         // 设置画笔为抗锯齿
@@ -61,13 +64,17 @@ public class MyCircle extends View {
     }
 
     public void setRadius(int radius) {
-        this.radius = radius;
+        this.radius = 50 + (radius - 5) * 5;
         invalidate();
     }
 
     public void setCenter(PointF center) {
         this.center = center;
+        Logger.e(center.toString());
         invalidate();
     }
 
+    public int getRadius() {
+        return radius;
+    }
 }
