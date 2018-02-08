@@ -3,11 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Magnifier.iml" filepath="$PROJECT_DIR$/Magnifier.iml" />
-      <module fileurl="file://E:\FreeStar\Magnifier\Magnifier.iml" filepath="E:\FreeStar\Magnifier\Magnifier.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://E:\FreeStar\Magnifier\app\app.iml" filepath="E:\FreeStar\Magnifier\app\app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/enlarge/enlarge.iml" filepath="$PROJECT_DIR$/enlarge/enlarge.iml" />
-      <module fileurl="file://$PROJECT_DIR$/enlarge/enlarge.iml" filepath="$PROJECT_DIR$/enlarge/enlarge.iml" />
     </modules>
   </component>
 </project>
