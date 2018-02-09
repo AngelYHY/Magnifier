@@ -9,8 +9,6 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
 
-import vip.freestar.mylogger.Logger;
-
 /**
  * 描述：
  * 作者：一颗浪星
@@ -70,8 +68,11 @@ public class MyCircle extends View {
 
     public void setCenter(PointF center) {
         this.center = center;
-        Logger.e(center.toString());
         invalidate();
+    }
+
+    public PointF getCenter() {
+        return center;
     }
 
     public int getRadius() {
