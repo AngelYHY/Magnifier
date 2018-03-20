@@ -72,12 +72,13 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
     private float lastX;
     private float lastY;
 
-    private PointF mCenterPoint = new PointF();
-
     private RectF mFocusRect = new RectF();
     ArrayList<ImageItem> images = null;
     private boolean visible = true;
     private int radius;
+    //获取控件在屏幕的位置
+    int[] location = new int[2];
+    private PointF point = new PointF();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,8 +151,8 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
                 if (!file.exists()) {
                     file.mkdir();
                 }
-                
-                file=new File(path, Calendar.getInstance().getTimeInMillis() + ".png");
+
+                file = new File(path, Calendar.getInstance().getTimeInMillis() + ".png");
 
 //                File sdRoot = Environment.getExternalStorageDirectory();
 //                File file = new File(sdRoot, Calendar.getInstance().getTimeInMillis() + ".png");
@@ -197,17 +198,33 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
+
+        // 获取当前触摸的绝对坐标
+        int rawX = (int) event.getRawX();
+        int rawY = (int) event.getRawY();
 
         Logger.e("", mFl.getTop(), mFl.getLeft(), mFl.getRight(), mFl.getBottom(), event.getY(), event.getX(), event.getRawX(), event.getRawY());
 
-        //触摸大圆
-        if (x > mClip.getLeft() && x < mClip.getRight() && y > mClip.getTop() && y < mClip.getBottom()) {
+        mClip.getLocationOnScreen(location);
+
+        //半径
+        int r = (mClip.getRight() - mClip.getLeft()) / 2;
+
+        //圆心坐标
+        int vCenterX = location[0] + r;
+        int vCenterY = location[1] + r;
+
+        //点击位置x坐标与圆心的x坐标的距离
+        int distanceX = Math.abs(vCenterX - rawX);
+        //点击位置y坐标与圆心的y坐标的距离
+        int distanceY = Math.abs(vCenterY - rawY);
+        //点击位置与圆心的直线距离
+        int distanceZ = (int) Math.sqrt(Math.pow(distanceX, 2) + Math.pow(distanceY, 2));
+
+        // 触摸大圆
+        if (distanceZ < r) {
             Logger.e("触摸大圆");
-            // 获取当前触摸的绝对坐标
-            int rawX = (int) event.getRawX();
-            int rawY = (int) event.getRawY();
+
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     // 上一次离开时的坐标
@@ -215,14 +232,16 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
                     lastY = rawY;
                     break;
                 case MotionEvent.ACTION_MOVE:
-//                    if (x > radius && x < mFl.getRight() - radius && y > radius && y < mFl.getHeight() - radius) {
+                    mFl.getLocationOnScreen(location);
+                    // 判断 圆是否会 超出 图片的范围
+                    if (rawX > location[0] + radius && rawX < location[0] + mFl.getWidth() - radius && rawY > location[1] + radius && rawY < location[1] + mFl.getHeight() - radius) {
                         // 两次的偏移量
                         moveView(rawX - lastX, rawY - lastY);
                         // 不断修改上次移动完成后坐标
                         lastX = rawX;
                         lastY = rawY;
-                        Logger.e("移动");
-//                    }
+                    }
+
                     break;
                 default:
                     break;
@@ -230,17 +249,19 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
         } else {  // 非大圆部分
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-//                    viewVisible(false);
                     break;
                 case MotionEvent.ACTION_MOVE:
-//                    if (x > mCircle.getRadius() && x < mFl.getRight() - mCircle.getRadius() && y > mFl.getTop() + mCircle.getRadius() && mFl.getBottom() - mCircle.getRadius() < y) {
-                        mCircle.setCenter(new PointF(event.getX() + mFl.getLeft(), event.getY() + mFl.getTop()));
-//                    }
+                    mFl.getLocationOnScreen(location);
+                    // 判断 圆是否会 超出 图片的范围
+                    if (rawX > location[0] + mCircle.getRadius() && rawX < location[0] + mFl.getWidth() - mCircle.getRadius() && rawY > location[1] + mCircle.getRadius() && rawY < location[1] + mFl.getHeight() - mCircle.getRadius()) {
+                        //圆心点的计算
+                        setCircleCenter(rawX, rawY);
+                    }
                     break;
                 case MotionEvent.ACTION_UP:
-                    mCenterPoint.x = x;
-                    mCenterPoint.y = y;
-                    mCircle.setCenter(new PointF(event.getX() + mFl.getLeft(), event.getY() + mFl.getTop()));
+                    setCircleCenter(rawX, rawY);
+                    point.x = event.getX();
+                    point.y = event.getY();
                     create();
                     break;
                 default:
@@ -250,12 +271,20 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
         return true;
     }
 
+    private void setCircleCenter(int rawX, int rawY) {
+//        int centerX = rawX - location[0];
+//        int centerY = rawY - location[1];
+        mCircle.getLocationOnScreen(location);
+        Logger.e("", rawX, rawY, location[0], location[1]);
+        mCircle.setCenter(new PointF(rawX - location[0], rawY - location[1]));
+    }
+
     private void create() {
 
-        mFocusRect.left = mCenterPoint.x - mCircle.getRadius();
-        mFocusRect.right = mCenterPoint.x + mCircle.getRadius();
-        mFocusRect.top = mCenterPoint.y - mCircle.getRadius();
-        mFocusRect.bottom = mCenterPoint.y + mCircle.getRadius();
+        mFocusRect.left = point.x - mCircle.getRadius();
+        mFocusRect.right = point.x + mCircle.getRadius();
+        mFocusRect.top = point.y - mCircle.getRadius();
+        mFocusRect.bottom = point.y + mCircle.getRadius();
 
         Bitmap bitmap = makeCropBitmap(((GlideBitmapDrawable) mIv.getDrawable()).getBitmap(), mFocusRect, getImageMatrixRect(), 100, 100, false);
 
@@ -311,7 +340,7 @@ public class Main2Activity extends AppCompatActivity implements View.OnTouchList
      */
     private RectF getImageMatrixRect() {
         RectF rectF = new RectF();
-        rectF.set(0, 0, mIv.getDrawable().getIntrinsicWidth(), mIv.getDrawable().getIntrinsicHeight());
+        rectF.set(mIv.getLeft(), mIv.getTop(), mIv.getRight(), mIv.getBottom());
         return rectF;
     }
 
