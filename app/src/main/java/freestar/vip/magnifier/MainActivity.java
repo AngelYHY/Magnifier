@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -64,7 +65,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         Logger.init();
-
         imagePicker = ImagePicker.getInstance();
         imagePicker.setImageLoader(new GlideImageLoader());
         imagePicker.setMultiMode(false);
@@ -106,10 +106,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 .load(R.drawable.love_tree)
                 .into(iv);
 
+
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
                 currentX = (int) event.getRawX();
